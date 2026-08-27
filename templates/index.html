@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoiceShield AI | Vercel Deployment</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #030712; color: #F8FAFC; margin: 0; padding: 20px; }
+        .header { border-bottom: 1px solid #1E293B; padding-bottom: 10px; margin-bottom: 20px; }
+        .header h1 { margin: 0; color: #FFFFFF; }
+        .header span { color: #38BDF8; }
+        .container { display: flex; flex-wrap: wrap; gap: 20px; }
+        .sidebar { flex: 1; min-width: 280px; background: #0B1120; border: 1px solid #1E293B; border-radius: 12px; padding: 16px; }
+        .main-content { flex: 2; min-width: 300px; background: #0B1120; border: 1px solid #1E293B; border-radius: 12px; padding: 20px; text-align: center; }
+        input, select, button { width: 100%; padding: 10px; margin: 8px 0; border-radius: 8px; border: 1px solid #334155; background: #0F172A; color: white; box-sizing: border-box; }
+        button { background: linear-gradient(135deg, #4F46E5 0%, #3B82F6 100%); font-weight: bold; cursor: pointer; border: none; }
+        .score-box { font-size: 48px; font-weight: bold; margin: 20px 0; color: #F59E0B; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛡️ VoiceShield <span>AI</span></h1>
+        <p style="color: #64748B; font-size: 12px;">Vercel Production Deployment | SIH 2026</p>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <h3>📞 Call Inputs</h3>
+            <label>Caller Name</label>
+            <input type="text" id="caller_name" value="CEO Arun Kumar">
+            <label>Line ID</label>
+            <input type="text" id="phone_number" value="+91 98765 43210">
+            <label>Purpose</label>
+            <select id="purpose">
+                <option>Urgent Fund Transfer</option>
+                <option>Data Request</option>
+                <option>Account Verification</option>
+            </select>
+            <hr style="border-color: #1E293B; margin: 15px 0;">
+            <label>Select Audio File</label>
+            <input type="file" id="audio_file" accept="audio/*">
+            <button onclick="analyzeAudio()">🔍 ANALYZE AUDIO</button>
+        </div>
+
+        <div class="main-content">
+            <h3>📊 Clone Risk Index</h3>
+            <div class="score-box" id="risk_display">--%</div>
+            <p id="status_text" style="color: #94A3B8;">Upload audio file to perform forensic analysis.</p>
+            <br>
+            <button id="pdf_btn" onclick="downloadPDF()" style="display:none; background: #10B981;">📥 DOWNLOAD FORENSIC PDF REPORT</button>
+        </div>
+    </div>
+
+    <script>
+        let currentScore = 0;
+
+        async function analyzeAudio() {
+            const fileInput = document.getElementById('audio_file');
+            if (!fileInput.files[0]) {
+                alert('Please select an audio file first!');
+                return;
+            }
+
+            document.getElementById('status_text').innerText = 'Analyzing audio payload...';
+            const formData = new FormData();
+            formData.append('audio', fileInput.files[0]);
+
+            const res = await fetch('/analyze', { method: 'POST', body: formData });
+            const data = await res.json();
+
+            if (data.status === 'success') {
+                currentScore = data.risk_score;
+                document.getElementById('risk_display').innerText = currentScore + '%';
+                document.getElementById('status_text').innerText = 'Analysis Complete!';
+                document.getElementById('pdf_btn').style.display = 'block';
+            }
+        }
+
+        async function downloadPDF() {
+            const payload = {
+                caller_name: document.getElementById('caller_name').value,
+                phone_number: document.getElementById('phone_number').value,
+                purpose: document.getElementById('purpose').value,
+                risk_score: currentScore
+            };
+
+            const response = await fetch('/download-pdf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `VoiceShield_Report.pdf`;
+            a.click();
+        }
+    </script>
+</body>
+</html>
